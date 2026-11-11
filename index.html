@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roleta das Emoções</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Botões de topo: sempre disponíveis -->
+  <header class="topo">
+    <div class="marca">
+      <span class="marca-icone" aria-hidden="true"></span>
+      <span class="marca-nome">Roleta das Emoções</span>
+    </div>
+    <!-- Etapas da jornada (preenchidas pelo app.js) -->
+    <ol class="etapas" id="etapas" aria-label="Etapas da brincadeira"></ol>
+    <div class="topo-acoes">
+      <button type="button" id="topo-inicio" class="btn btn-topo" aria-label="Início">
+        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+        <span class="btn-texto">Início</span>
+      </button>
+      <button type="button" id="topo-sobre" class="btn btn-topo" aria-label="Sobre">
+        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <span class="btn-texto">Sobre</span>
+      </button>
+      <button type="button" id="topo-config" class="btn btn-topo" aria-label="Configurações">
+        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+        <span class="btn-texto">Configurações</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Contêiner onde as telas são desenhadas -->
+  <main id="app"></main>
+
+  <!-- Modal de configurações -->
+  <dialog id="config" aria-labelledby="config-titulo">
+    <h2 id="config-titulo">Configurações</h2>
+    <label class="cfg-linha">
+      <span class="cfg-texto"><strong>Sons e efeitos</strong><small>Sons suaves ao girar e ao tocar nos botões</small></span>
+      <input type="checkbox" id="cfg-som" class="interruptor">
+    </label>
+    <label class="cfg-linha cfg-volume">
+      <span class="cfg-texto"><strong>Volume</strong></span>
+      <input type="range" id="cfg-volume" min="0" max="1" step="0.1">
+    </label>
+    <label class="cfg-linha">
+      <span class="cfg-texto"><strong>Modo escuro</strong><small>Cores mais escuras, mais confortáveis em ambientes com pouca luz</small></span>
+      <input type="checkbox" id="cfg-escuro" class="interruptor">
+    </label>
+    <label class="cfg-linha">
+      <span class="cfg-texto"><strong>Repetir emoções</strong><small>Emoções já sorteadas podem aparecer de novo</small></span>
+      <input type="checkbox" id="cfg-repetir" class="interruptor">
+    </label>
+    <div class="acoes acoes-dir">
+      <button type="button" id="cfg-fechar" class="btn btn-primario">
+        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+        <span class="btn-texto">Concluir</span>
+      </button>
+    </div>
+  </dialog>
+
+  <!-- Scripts comuns (sem módulos ES, para funcionar em file://) -->
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/wheel.js"></script>
+  <script src="js/screens.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
