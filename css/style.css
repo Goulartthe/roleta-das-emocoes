@@ -385,7 +385,7 @@ main {
 .roleta-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: 20px; align-items: stretch; }
 .corpo-roda { display: grid; place-items: center; padding: 40px 28px; }
 .roleta-area { position: relative; width: min(440px, 100%); margin: 0 auto; padding-top: 26px; }
-.seta { position: absolute; top: 0; left: 50%; width: 40px; transform: translateX(-50%); z-index: 2; }
+.seta { position: absolute; top: 0; left: 50%; width: 40px; transform: translateX(-50%); z-index: 2; pointer-events: none; } /* toque na seta chega à roda */
 .seta svg { display: block; width: 100%; }
 .seta path { fill: var(--texto); stroke: var(--superficie); stroke-width: 3; }
 .roda {
@@ -397,7 +397,8 @@ main {
   will-change: transform;
 }
 .roda svg { display: block; width: 100%; height: 100%; }
-.roda-clicavel { cursor: pointer; }
+.roda-clicavel { cursor: grab; user-select: none; -webkit-user-select: none; }
+.roda-clicavel.arrastando { cursor: grabbing; }
 .roda-clicavel:hover { box-shadow: 0 0 0 10px var(--superficie), 0 0 0 12px var(--borda-forte); }
 .fatia-emoji { font-size: 30px; }
 .fatia-nome { font-size: 13px; font-weight: 600; letter-spacing: .01em; }
