@@ -279,7 +279,7 @@ const Telas = {
     const vazio = h('div', { class: 'vazio' },
       h('span', { class: 'icone-tile' }, icone('girar')),
       h('p', { class: 'vazio-titulo' }, 'Nenhuma emoção sorteada ainda'),
-      h('p', { class: 'vazio-desc' }, 'Toque no botão ou na própria roleta para girar.'));
+      h('p', { class: 'vazio-desc' }, 'Toque no botão, ou segure e arraste a roleta para girar.'));
     const resultado = h('div', { class: 'resultado', 'aria-live': 'polite' });
     const contador = meta('');
     function atualizarContador() {
@@ -287,7 +287,9 @@ const Telas = {
     }
     atualizarContador();
     const btnContinuar = botao('avancar', 'Conhecer a emoção', function () { App.irPara('emocao'); }, 'btn-primario', { hidden: true });
-    const btnGirar = botao('girar', 'Girar roleta', function () {
+    // Um único caminho de giro para botão, clique e arraste.
+    // opcoesGiro vem do arraste ({ sentido, forca }); sem ela, giro padrão.
+    function girarRoleta(opcoesGiro) {
       if (estado.girando) return;
       btnGirar.disabled = true;
       btnContinuar.hidden = true;
@@ -317,14 +319,22 @@ const Telas = {
         btnGirar.classList.replace('btn-primario', 'btn-secundario');
         btnGirar.querySelector('.btn-texto').textContent = 'Girar de novo';
         btnContinuar.hidden = false;
-        btnContinuar.focus();
-      });
-    }, 'btn-primario');
+        btnContinuar.focus({ preventScroll: opcoesGiro !== undefined && window.innerWidth > 680 });
+      }, opcoesGiro);
+    }
+    const btnGirar = botao('girar', 'Girar roleta', function () { girarRoleta(); }, 'btn-primario');
 
-    // Clicar na própria roleta também gira (o botão continua para o teclado).
+    // Na própria roleta: clicar gira; segurar e arrastar (mouse ou dedo) também.
+    // O botão continua disponível para quem usa o teclado.
     roda.classList.add('roda-clicavel');
-    roda.title = 'Clique para girar';
-    roda.addEventListener('click', function () { if (!btnGirar.disabled) btnGirar.click(); });
+    roda.title = 'Clique ou arraste para girar';
+    const arraste = Roleta.habilitarArraste(roda, function (sentido, forca) {
+      girarRoleta({ sentido: sentido, forca: forca });
+    });
+    roda.addEventListener('click', function () {
+      if (arraste.consultouClique()) return; // o arraste já girou
+      if (!btnGirar.disabled) girarRoleta();
+    });
 
     return h('section', { class: 'tela tela-roleta' },
       cabecalhoPagina('Sortear uma emoção', TEXTOS.roletaInstrucao),
