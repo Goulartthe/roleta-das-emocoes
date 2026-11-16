@@ -118,15 +118,22 @@ const Roleta = (function () {
     if (!reduzido) tiquear();
 
     let terminou = false;
+    // Só o fim da animação de "transform" da PRÓPRIA roda encerra o giro.
+    // (A opacidade das fatias também anima e o evento dela "sobe" até a roda.)
+    function aoTransicao(e) {
+      if (e.target !== roda || e.propertyName !== 'transform') return;
+      fim();
+    }
     function fim() {
       if (terminou) return;
       terminou = true;
+      roda.removeEventListener('transitionend', aoTransicao);
       clearTimeout(tiqueId);
       if (meuGiro !== giroAtivo) return; // giro cancelado (saiu da tela)
       estado.girando = false;
       aoTerminar(indiceNaSeta(rotacaoAtual), indice);
     }
-    roda.addEventListener('transitionend', fim, { once: true });
+    roda.addEventListener('transitionend', aoTransicao);
     setTimeout(fim, duracao + 400); // segurança, caso o evento não dispare
   }
 
