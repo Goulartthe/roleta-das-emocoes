@@ -228,7 +228,16 @@ const Telas = {
 
   /* 1. Início — painel de boas-vindas */
   inicio: function () {
-    const mini = h('div', { class: 'roda roda-mini' });
+    // A roleta da tela inicial também gira: clicar ou arrastar abre a tela
+    // da roleta já girando (com a força e o sentido do gesto).
+    const mini = h('div', { class: 'roda roda-mini roda-clicavel', title: 'Clique ou arraste para girar' });
+    const arrasteMini = Roleta.habilitarArraste(mini, function (sentido, forca) {
+      App.girarAoAbrir({ sentido: sentido, forca: forca });
+    });
+    mini.addEventListener('click', function () {
+      if (arrasteMini.consultouClique()) return; // o arraste já girou
+      App.girarAoAbrir({});
+    });
     mini.innerHTML = Roleta.criarSVG();
     const comoUsar = secaoSobre('Como usar').lista || [];
     const naoE = secaoSobre('O que não é').texto;
@@ -335,6 +344,14 @@ const Telas = {
       if (arraste.consultouClique()) return; // o arraste já girou
       if (!btnGirar.disabled) girarRoleta();
     });
+
+    // Veio da roleta da tela inicial? Gira assim que a tela aparecer.
+    const pendente = App.pegarGiroPendente();
+    if (pendente) {
+      setTimeout(function () {
+        girarRoleta(typeof pendente.forca === 'number' ? pendente : undefined);
+      }, 60);
+    }
 
     return h('section', { class: 'tela tela-roleta' },
       cabecalhoPagina('Sortear uma emoção', TEXTOS.roletaInstrucao),

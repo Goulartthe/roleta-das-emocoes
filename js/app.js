@@ -117,6 +117,22 @@ const App = (function () {
     render();
   }
 
+  /**
+   * Girar a partir da roleta da tela inicial: abre a tela da roleta e
+   * deixa o giro "pendente" para ela executar logo ao aparecer.
+   * opcoes = { sentido, forca } (arraste) ou {} (clique).
+   */
+  let giroPendente = null;
+  function girarAoAbrir(opcoes) {
+    giroPendente = opcoes || {};
+    brincar();
+  }
+  function pegarGiroPendente() {
+    const p = giroPendente;
+    giroPendente = null;
+    return p;
+  }
+
   /** Nova rodada: apaga respostas e abre a roleta. */
   function girarDeNovo() {
     novaRodada();
@@ -189,6 +205,7 @@ const App = (function () {
   return {
     render: render, irPara: irPara, voltar: voltar, proximaCarta: proximaCarta,
     inicio: inicio, brincar: brincar, girarDeNovo: girarDeNovo, terminar: terminar,
+    girarAoAbrir: girarAoAbrir, pegarGiroPendente: pegarGiroPendente,
     abrirEstrategia: abrirEstrategia, abrirConfig: abrirConfig, registrarLimpeza: registrarLimpeza
   };
 })();
