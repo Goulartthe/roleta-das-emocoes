@@ -500,6 +500,8 @@ main {
 .figura-corpo .base { fill: var(--corpo-base); transition: fill .15s ease; }
 .figura-corpo.todo-marcado .base { fill: var(--cor); }
 .figura-corpo .regiao { fill: var(--corpo-regiao); stroke: var(--superficie); stroke-width: 3; cursor: pointer; transition: fill .15s ease; }
+/* Braços: mesma cor de antes quando não marcados (o desenho do boneco não muda) */
+.figura-corpo .regiao-bracos { fill: var(--corpo-base); stroke: none; }
 .figura-corpo .regiao:hover { fill: var(--corpo-hover); }
 .figura-corpo .regiao.marcada { fill: var(--cor); }
 

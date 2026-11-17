@@ -48,7 +48,7 @@ function iconeEstrategia(s, classe) {
 function figuraCorpo() {
   const f = h('div', { class: 'figura-corpo', 'aria-hidden': 'true' });
   f.innerHTML = '<svg viewBox="0 0 200 340">' +
-    '<g class="base"><rect x="30" y="100" width="24" height="104" rx="12"/><rect x="146" y="100" width="24" height="104" rx="12"/></g>' +
+    '<g class="regiao regiao-bracos" data-id="bracos"><rect x="30" y="100" width="24" height="104" rx="12"/><rect x="146" y="100" width="24" height="104" rx="12"/></g>' +
     '<g class="regiao" data-id="cabeca"><circle cx="100" cy="46" r="34"/></g>' +
     '<g class="regiao" data-id="garganta"><rect x="87" y="80" width="26" height="18" rx="6"/></g>' +
     '<g class="regiao" data-id="peito"><rect x="58" y="98" width="84" height="60" rx="20"/></g>' +

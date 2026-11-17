@@ -10,6 +10,7 @@ const REGIOES_CORPO = [
   { id: 'garganta', emoji: '🗣️', texto: 'Garganta' },
   { id: 'peito',    emoji: '❤️', texto: 'Peito' },
   { id: 'barriga',  emoji: '👕', texto: 'Barriga' },
+  { id: 'bracos',   emoji: '💪', texto: 'Braços' },
   { id: 'maos',     emoji: '✋', texto: 'Mãos' },
   { id: 'pernas',   emoji: '🦵', texto: 'Pernas' },
   { id: 'todo',     emoji: '🧍', texto: 'Corpo todo' },
