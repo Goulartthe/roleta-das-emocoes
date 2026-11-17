@@ -155,6 +155,7 @@ const Roleta = (function () {
     let ativo = false, ultimoAngulo = 0, acumulado = 0, percorrido = 0, amostras = [];
     let houveArraste = false;
     roda.style.touchAction = 'none'; // no celular, o dedo gira a roda em vez de rolar a página
+    roda.addEventListener('dragstart', function (ev) { ev.preventDefault(); });
 
     function anguloDo(ev) {
       const r = roda.getBoundingClientRect();
@@ -163,6 +164,7 @@ const Roleta = (function () {
 
     roda.addEventListener('pointerdown', function (ev) {
       if (estado.girando || ev.button > 0) return;
+      ev.preventDefault(); // mouse real: evita seleção de texto/arraste nativo que cancelam o gesto
       ativo = true;
       houveArraste = false;
       roda.setPointerCapture(ev.pointerId);
