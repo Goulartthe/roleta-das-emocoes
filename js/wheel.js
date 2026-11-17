@@ -48,18 +48,56 @@ const Roleta = (function () {
       '</svg>';
   }
 
+  /** Índices que podem sair agora, respeitando a configuração de repetição. */
+  function indicesPermitidos() {
+    const todos = EMOCOES.map(function (_, i) { return i; });
+    if (estado.config.repetirEmocoes) return todos;
+    const permitidos = todos.filter(function (i) { return estado.jaSorteadas.indexOf(EMOCOES[i].id) === -1; });
+    if (permitidos.length === 0) {          // esgotou as cinco: reinicia o ciclo
+      estado.jaSorteadas = [];
+      return todos;
+    }
+    return permitidos;
+  }
+
   /** Escolhe o índice respeitando a configuração de repetição. */
   function sortearIndice() {
-    const todos = EMOCOES.map(function (_, i) { return i; });
-    let permitidos = todos;
-    if (!estado.config.repetirEmocoes) {
-      permitidos = todos.filter(function (i) { return estado.jaSorteadas.indexOf(EMOCOES[i].id) === -1; });
-      if (permitidos.length === 0) {        // esgotou as cinco: reinicia o ciclo
-        estado.jaSorteadas = [];
-        permitidos = todos;
-      }
-    }
+    const permitidos = indicesPermitidos();
     return permitidos[Math.floor(Math.random() * permitidos.length)];
+  }
+
+  /* ---------- Giro por inércia (arraste) ----------
+     A roda sai com a MESMA velocidade do gesto e desacelera com atrito
+     constante. Distância natural = v² / (2·ATRITO). O resultado é a fatia
+     onde ela pararia; só se ajusta poucos graus para não parar na divisória
+     (ou para pular uma emoção já sorteada, se a repetição estiver desligada). */
+  const ATRITO = 0.0005;          // desaceleração em graus/ms²
+  const VEL_MAX = 2.0;            // limite de velocidade do gesto (graus/ms) ≈ 11 voltas no máximo
+  const MARGEM_FATIA = 25;        // parar a no máx. 25° do centro da fatia
+
+  function planejarInercia(velocidade) {
+    const sentido = velocidade < 0 ? -1 : 1;
+    const v0 = Math.min(Math.abs(velocidade), VEL_MAX);
+    const natural = (v0 * v0) / (2 * ATRITO);        // graus que percorreria sozinha
+    const permitidos = indicesPermitidos();
+    // Procura o menor ajuste (de -60° a +360°) que pare dentro de uma fatia permitida.
+    let melhor = null;
+    for (let ajuste = -60; ajuste < 360; ajuste++) {
+      const distancia = natural + ajuste;
+      if (distancia < 20) continue;                  // sempre anda um pouquinho
+      const local = mod(-(rotacaoAtual + sentido * distancia), 360);
+      const indice = Math.floor(mod(local + FATIA / 2, 360) / FATIA) % EMOCOES.length;
+      let doCentro = mod(local - indice * FATIA + 180, 360) - 180;
+      if (Math.abs(doCentro) > MARGEM_FATIA || permitidos.indexOf(indice) === -1) continue;
+      if (!melhor || Math.abs(ajuste) < Math.abs(melhor.ajuste)) melhor = { ajuste: ajuste, distancia: distancia, indice: indice };
+    }
+    // Tempo para começar exatamente na velocidade do gesto (desaceleração uniforme).
+    const duracao = v0 > 0.05 ? (2 * melhor.distancia) / v0 : 500;
+    return {
+      indice: melhor.indice,
+      nova: rotacaoAtual + sentido * melhor.distancia,
+      duracao: Math.round(Math.max(400, Math.min(7000, duracao)))
+    };
   }
 
   /** Índice da fatia que está sob a seta (topo) para uma rotação. */
@@ -85,8 +123,8 @@ const Roleta = (function () {
   /**
    * Gira a roda e chama aoTerminar(indice) quando parar.
    * Ignora cliques enquanto já estiver girando.
-   * opcoes (opcional, vem do arraste): { sentido: 1 horário | -1 anti-horário,
-   * forca: 0..1 conforme a velocidade do gesto }.
+   * opcoes (opcional, vem do arraste): { velocidade: graus/ms com sinal
+   * (+ horário, − anti-horário) }. Sem opcoes: giro padrão do botão/clique.
    */
   function girar(roda, aoTerminar, opcoes) {
     if (estado.girando) return;
@@ -94,21 +132,28 @@ const Roleta = (function () {
     const meuGiro = ++giroAtivo;
     opcoes = opcoes || {};
 
-    const indice = sortearIndice();   // sorteia ANTES: a seta sempre coincide (RF04)
     const reduzido = movimentoReduzido();
-    const arraste = typeof opcoes.forca === 'number';
-    const sentido = opcoes.sentido < 0 ? -1 : 1;
-    const duracao = reduzido ? 800 : (arraste ? Math.round(4000 + 2500 * opcoes.forca) : 6000);
-    const voltas = reduzido ? 1 : (arraste ? 2 + Math.round(opcoes.forca * 4)             // 2 a 6
-                                           : 4 + Math.floor(Math.random() * 3));          // 4 a 6
-    const desvio = (Math.random() * 50) - 25;                         // ±25° dentro da fatia
-    const alvo = mod(-(indice * FATIA + desvio), 360);
-    // Parte da posição atual (que pode ter vindo do arraste) e gira no sentido pedido.
-    const nova = sentido > 0
-      ? rotacaoAtual + mod(alvo - rotacaoAtual, 360) + voltas * 360
-      : rotacaoAtual - mod(rotacaoAtual - alvo, 360) - voltas * 360;
+    let indice, nova, duracao, curva;
 
-    roda.style.transition = 'transform ' + duracao + 'ms cubic-bezier(0.15, 0.6, 0.2, 1)';
+    if (typeof opcoes.velocidade === 'number') {
+      // Arraste: inércia sincronizada com o gesto. O resultado é onde a roda para.
+      const plano = planejarInercia(opcoes.velocidade);
+      indice = plano.indice;
+      nova = plano.nova;
+      duracao = reduzido ? Math.min(plano.duracao, 800) : plano.duracao;
+      curva = 'cubic-bezier(0.333, 0.667, 0.667, 1)'; // desaceleração uniforme (ease-out quadrático)
+    } else {
+      // Botão/clique: comportamento original, sem mudanças.
+      indice = sortearIndice();   // sorteia ANTES: a seta sempre coincide (RF04)
+      duracao = reduzido ? 800 : 6000;
+      const voltas = reduzido ? 1 : 4 + Math.floor(Math.random() * 3); // 4 a 6
+      const desvio = (Math.random() * 50) - 25;                         // ±25° dentro da fatia
+      const alvo = mod(-(indice * FATIA + desvio), 360);
+      nova = rotacaoAtual + mod(alvo - rotacaoAtual, 360) + voltas * 360;
+      curva = 'cubic-bezier(0.15, 0.6, 0.2, 1)';
+    }
+
+    roda.style.transition = 'transform ' + duracao + 'ms ' + curva;
     roda.getBoundingClientRect(); // força o navegador a aplicar a transição
     roda.style.transform = 'rotate(' + nova + 'deg)';
     rotacaoAtual = nova;
@@ -148,7 +193,7 @@ const Roleta = (function () {
   /**
    * Permite girar a roda arrastando (mouse ou dedo).
    * Durante o arraste a roda acompanha o ponteiro; ao soltar chama
-   * aoLancar(sentido, forca). Retorna true em consultouClique() se houve
+   * aoLancar(velocidade em graus/ms, com sinal). Retorna true em consultouClique() se houve
    * arraste, para o clique que vem depois não disparar outro giro.
    */
   function habilitarArraste(roda, aoLancar) {
@@ -197,11 +242,13 @@ const Roleta = (function () {
       roda.classList.remove('arrastando');
       if (percorrido < 6) return;             // foi só um toque: o clique cuida disso
       houveArraste = true;
+      // Velocidade no momento de soltar (graus/ms, com sinal). Se o ponteiro
+      // ficou parado antes de soltar (>80ms), a roda sai sem impulso.
+      const agora = performance.now();
       const p = amostras[0], u = amostras[amostras.length - 1];
-      const velocidade = (u.a - p.a) / Math.max(16, u.t - p.t); // graus por ms
-      const sentido = Math.abs(velocidade) > 0.02 ? Math.sign(velocidade) : (Math.sign(acumulado) || 1);
-      const forca = Math.max(0.15, Math.min(1, Math.abs(velocidade) / 1.5));
-      aoLancar(sentido, forca);
+      let velocidade = agora - u.t > 80 ? 0 : (u.a - p.a) / Math.max(16, u.t - p.t);
+      if (velocidade === 0) velocidade = 0.0001 * (Math.sign(acumulado) || 1); // mantém o sentido
+      aoLancar(velocidade);
     }
     roda.addEventListener('pointerup', soltar);
     roda.addEventListener('pointercancel', soltar);

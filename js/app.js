@@ -120,7 +120,7 @@ const App = (function () {
   /**
    * Girar a partir da roleta da tela inicial: abre a tela da roleta e
    * deixa o giro "pendente" para ela executar logo ao aparecer.
-   * opcoes = { sentido, forca } (arraste) ou {} (clique).
+   * opcoes = { velocidade } (arraste) ou {} (clique).
    */
   let giroPendente = null;
   function girarAoAbrir(opcoes) {

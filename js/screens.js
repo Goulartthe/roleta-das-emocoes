@@ -229,10 +229,10 @@ const Telas = {
   /* 1. Início — painel de boas-vindas */
   inicio: function () {
     // A roleta da tela inicial também gira: clicar ou arrastar abre a tela
-    // da roleta já girando (com a força e o sentido do gesto).
+    // da roleta já girando, na velocidade do gesto.
     const mini = h('div', { class: 'roda roda-mini roda-clicavel', title: 'Clique ou arraste para girar' });
-    const arrasteMini = Roleta.habilitarArraste(mini, function (sentido, forca) {
-      App.girarAoAbrir({ sentido: sentido, forca: forca });
+    const arrasteMini = Roleta.habilitarArraste(mini, function (velocidade) {
+      App.girarAoAbrir({ velocidade: velocidade });
     });
     mini.addEventListener('click', function () {
       if (arrasteMini.consultouClique()) return; // o arraste já girou
@@ -297,7 +297,7 @@ const Telas = {
     atualizarContador();
     const btnContinuar = botao('avancar', 'Conhecer a emoção', function () { App.irPara('emocao'); }, 'btn-primario', { hidden: true });
     // Um único caminho de giro para botão, clique e arraste.
-    // opcoesGiro vem do arraste ({ sentido, forca }); sem ela, giro padrão.
+    // opcoesGiro vem do arraste ({ velocidade }); sem ela, giro padrão.
     function girarRoleta(opcoesGiro) {
       if (estado.girando) return;
       btnGirar.disabled = true;
@@ -337,8 +337,8 @@ const Telas = {
     // O botão continua disponível para quem usa o teclado.
     roda.classList.add('roda-clicavel');
     roda.title = 'Clique ou arraste para girar';
-    const arraste = Roleta.habilitarArraste(roda, function (sentido, forca) {
-      girarRoleta({ sentido: sentido, forca: forca });
+    const arraste = Roleta.habilitarArraste(roda, function (velocidade) {
+      girarRoleta({ velocidade: velocidade });
     });
     roda.addEventListener('click', function () {
       if (arraste.consultouClique()) return; // o arraste já girou
@@ -349,7 +349,7 @@ const Telas = {
     const pendente = App.pegarGiroPendente();
     if (pendente) {
       setTimeout(function () {
-        girarRoleta(typeof pendente.forca === 'number' ? pendente : undefined);
+        girarRoleta(typeof pendente.velocidade === 'number' ? pendente : undefined);
       }, 60);
     }
 
