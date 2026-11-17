@@ -24,6 +24,16 @@ const Roleta = (function () {
   }
 
   /** Monta o SVG da roda (dados confiáveis vindos de data.js). */
+  /* Emojis da roleta como IMAGEM (img/emocoes/*.png), gerados a partir dos
+     mesmos emojis de antes: o visual fica idêntico em qualquer aparelho,
+     sem depender da fonte de emoji do sistema, e funciona offline.
+     Mesma geometria do emoji anterior: centro em y=-50, ~34 unidades de
+     glifo, inclinado com a fatia e virado nas fatias de baixo. */
+  function imagemEmocao(e, centro) {
+    return '<image class="fatia-emoji" href="img/emocoes/' + e.id + '.png" x="-18" y="-68" width="36" height="36"' +
+      virar(centro, -50) + '/>';
+  }
+
   function criarSVG() {
     let fatias = '';
     EMOCOES.forEach(function (e, i) {
@@ -35,7 +45,7 @@ const Roleta = (function () {
           '<path d="M0 0 L' + a[0] + ' ' + a[1] + ' A' + RAIO + ' ' + RAIO + ' 0 0 1 ' + b[0] + ' ' + b[1] + ' Z" ' +
           'fill="' + e.cor + '" style="stroke:var(--superficie)" stroke-width="3"/>' +
           '<g transform="rotate(' + centro + ')">' +
-            '<text class="fatia-emoji" x="0" y="-50" text-anchor="middle" dominant-baseline="middle"' + virar(centro, -50) + '>' + e.emoji + '</text>' +
+            imagemEmocao(e, centro) +
             '<text class="fatia-nome" x="0" y="-86" text-anchor="middle" dominant-baseline="middle" fill="' + e.corTexto + '"' + virar(centro, -86) + '>' + e.nome + '</text>' +
           '</g>' +
         '</g>';
