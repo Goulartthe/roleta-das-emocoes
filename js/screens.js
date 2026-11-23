@@ -35,7 +35,8 @@ const ICONES = {
   ajuda:     '<circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.8 14.2A5 5 0 0 1 21 19"/>',
   desenho:   '<path d="M4 20l4-1L19 8l-3-3L5 16zM14 7l3 3"/>',
   lugar:     '<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3zM5 18v2M19 18v2"/>',
-  coracao:   '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'
+  coracao:   '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  estrela:   '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>'
 };
 
 /** Ícone da estratégia dentro de um quadrado suave. */
@@ -185,9 +186,117 @@ function gradeOpcoes(opcoes, selecao, unica, conteudo, rotulo, classe) {
   return grade;
 }
 
+/* ---------- Cartas de regulação (carta "Como posso cuidar dessa emoção?") ----------
+   Cartinhas de baralho: fundo creme, moldura na cor da emoção, número e
+   emoji (imagem da roleta) nos cantos. 4 por vez na "mesa", levemente
+   tortas, com animação de dar as cartas. Ao tocar, a carta cresce e vira. */
+const CARTAS_POR_VEZ = 4;
+
+function cantoCarta(e, num, classe) {
+  return h('span', { class: 'carta-canto ' + classe, 'aria-hidden': 'true' },
+    h('b', null, String(num)), h('img', { src: 'img/emocoes/' + e.id + '.png', alt: '' }));
+}
+function ilustracaoCarta(e, num, classe) {
+  const s = h('span', { class: classe, 'aria-hidden': 'true' });
+  s.innerHTML = Ilustracoes.svg(e.id, num); // SVG fixo, gerado em ilustracoes.js
+  return s;
+}
+function frenteCarta(e, carta, num) {
+  return h('span', { class: 'carta-face carta-frente' },
+    cantoCarta(e, num, 'canto-sup'), cantoCarta(e, num, 'canto-inf'),
+    ilustracaoCarta(e, num, 'carta-ilus'),
+    h('span', { class: 'carta-nome' }, carta.nome));
+}
+
+/** Mesa com as 10 cartas da emoção, 4 por vez. selecao = Set de números ('1'..'10'). */
+function mesaCartas(e, selecao, notas) {
+  const cartas = CARTAS_REGULACAO[e.id] || [];
+  const paginas = Math.ceil(cartas.length / CARTAS_POR_VEZ);
+  const inclinacoes = [-4, 2.5, -1.5, 3.5];
+  let pagina = 0;
+  const mesa = h('div', { class: 'mesa', role: 'list', 'aria-label': 'Cartas de cuidado' });
+  const contador = meta('');
+  function desenhar(animar) {
+    mesa.replaceChildren();
+    mesa.classList.toggle('sem-animacao', !animar);
+    const ini = pagina * CARTAS_POR_VEZ;
+    cartas.slice(ini, ini + CARTAS_POR_VEZ).forEach(function (carta, k) {
+      const num = ini + k + 1, id = String(num), escolhida = selecao.has(id);
+      mesa.appendChild(h('button', {
+        type: 'button', role: 'listitem', class: 'carta-reg' + (escolhida ? ' escolhida' : ''),
+        style: '--giro:' + inclinacoes[k] + 'deg;--i:' + k,
+        'aria-label': carta.nome + (escolhida ? ' (escolhida)' : '') + '. Toque para ver como fazer.',
+        onclick: function (ev) { abrirCarta(e, carta, num, selecao, notas, function () { desenhar(false); }, ev.currentTarget); }
+      }, frenteCarta(e, carta, num), escolhida ? h('span', { class: 'carta-estrela', 'aria-hidden': 'true' }, icone('estrela')) : null));
+    });
+    contador.textContent = 'Cartas ' + dd(ini + 1) + '–' + dd(Math.min(ini + CARTAS_POR_VEZ, cartas.length)) + ' de ' + dd(cartas.length);
+  }
+  const btnOutras = botao('outra', 'Ver outras cartas', function () {
+    pagina = (pagina + 1) % paginas;
+    desenhar(true);
+  }, 'btn-secundario');
+  desenhar(true);
+  return h('div', { class: 'mesa-area' }, mesa, h('div', { class: 'mesa-acoes' }, contador, btnOutras));
+}
+
+/** Carta em destaque: cresce no meio da tela e vira para mostrar o verso. */
+function abrirCarta(e, carta, num, selecao, notas, aoMudar, origem) {
+  // Espaço de anotação (opcional): aparece quando a carta é escolhida.
+  const campoId = 'nota-carta-' + num;
+  const campoNota = h('textarea', { id: campoId, class: 'campo verso-nota-campo', rows: '2', maxlength: '300',
+    placeholder: 'Ex.: o que a criança contou ou como foi experimentar' });
+  campoNota.value = (notas && notas[String(num)]) || '';
+  campoNota.addEventListener('input', function () { notas[String(num)] = campoNota.value; });
+  const blocoNota = h('div', { class: 'verso-nota', hidden: true },
+    h('label', { for: campoId, class: 'verso-rotulo' }, 'Anotação (opcional)'), campoNota);
+  const id = String(num);
+  const reduzido = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dlg = h('dialog', { class: 'carta-modal', 'aria-label': carta.nome });
+  const btnEscolher = botao('estrela', '', function () {
+    if (selecao.has(id)) selecao.delete(id); else selecao.add(id);
+    atualizar();
+  }, 'btn-primario btn-escolher');
+  function atualizar() {
+    const sim = selecao.has(id);
+    btnEscolher.querySelector('.btn-texto').textContent = sim ? 'Escolhida! Tocar desfaz' : 'Quero experimentar';
+    btnEscolher.setAttribute('aria-pressed', sim ? 'true' : 'false');
+    btnEscolher.classList.toggle('ativo', sim);
+    blocoNota.hidden = !sim;
+    verso.classList.toggle('com-nota', sim); // verso compacto para caber a anotação
+  }
+  const verso = h('div', { class: 'carta-face carta-verso' },
+    cantoCarta(e, num, 'canto-sup'), cantoCarta(e, num, 'canto-inf'),
+    ilustracaoCarta(e, num, 'verso-ilus'),
+    h('h2', { class: 'verso-nome' }, carta.nome),
+    h('p', { class: 'verso-rotulo' }, 'Como fazer'),
+    h('p', { class: 'verso-texto verso-como' }, carta.comoRegular),
+    h('p', { class: 'verso-rotulo' }, 'Vamos conversar'),
+    h('p', { class: 'verso-texto' }, carta.pergunta),
+    blocoNota,
+    h('div', { class: 'verso-acoes' }, btnEscolher, botao('voltar', 'Voltar às cartas', function () { dlg.close(); }, 'btn-secundario')));
+  const flip = h('div', { class: 'carta-flip' }, frenteCarta(e, carta, num), verso);
+  dlg.appendChild(h('div', { class: 'carta-palco' }, flip));
+  atualizar();
+  document.body.appendChild(dlg);
+  dlg.showModal();
+  requestAnimationFrame(function () {
+    dlg.classList.add('aberta');
+    setTimeout(function () { flip.classList.add('virada'); btnEscolher.focus({ preventScroll: true }); }, reduzido ? 0 : 450);
+  });
+  dlg.addEventListener('click', function (ev) { if (ev.target === dlg) dlg.close(); }); // toque fora fecha
+  dlg.addEventListener('close', function () {
+    dlg.remove();
+    aoMudar();
+    if (origem && document.body.contains(origem)) origem.focus();
+  });
+}
+
 /** Lista de opções de uma carta para a emoção atual. */
 function opcoesDaCarta(carta, emocao) {
   if (carta.tipo === 'corpo') return REGIOES_CORPO;
+  if (carta.tipo === 'regulacao') {
+    return (CARTAS_REGULACAO[emocao.id] || []).map(function (x, k) { return { id: String(k + 1), texto: x.nome }; });
+  }
   if (carta.tipo === 'intensidade') return INTENSIDADES;
   if (carta.tipo === 'texto') {
     return emocao.pensamentos.map(function (p, k) { return { id: 'p' + k, emoji: '💭', texto: p }; });
@@ -396,6 +505,7 @@ const Telas = {
     const anterior = estado.respostas[c.id];
     const respondida = anterior && anterior.status === 'respondida';
     const selecao = new Set(respondida ? anterior.valores : []);
+    const notas = Object.assign({}, respondida && anterior.notas ? anterior.notas : {}); // anotações das cartas de cuidado
     let campo = null;
 
     const corpo = h('div', { class: 'carta-corpo' });
@@ -433,6 +543,8 @@ const Telas = {
           h('span', { class: 'opcao-texto' }, op.texto)
         ];
       }, c.pergunta, 'grade-intensidade'));
+    } else if (c.tipo === 'regulacao') {
+      corpo.appendChild(mesaCartas(e, selecao, notas));
     } else if (c.tipo === 'texto') {
       corpo.appendChild(h('p', { class: 'rotulo-secao' }, 'Será que você pensa algo assim?'));
       corpo.appendChild(gradeOpcoes(opcoesDaCarta(c, e), selecao, false, null, 'Exemplos de pensamentos', 'grade-pensamentos'));
@@ -451,6 +563,11 @@ const Telas = {
         const texto = campo ? campo.value.trim() : '';
         if (!valores.length && !texto && !falado) status = 'pulada';
         salvarResposta(c.id, status, valores, texto, falado);
+        if (c.tipo === 'regulacao' && status === 'respondida') {
+          const anot = {};
+          valores.forEach(function (id) { if (notas[id] && notas[id].trim()) anot[id] = notas[id].trim(); });
+          estado.respostas[c.id].notas = anot;
+        }
       } else {
         salvarResposta(c.id, status);
       }
@@ -541,7 +658,7 @@ const Telas = {
           h('div', null, meta('Estratégia'), h('h1', null, s.nome))),
         corpo: conteudo,
         rodape: [
-          botao('outra', 'Experimentar outra', function () { App.irPara('estrategias'); }, 'btn-secundario'),
+          ESTRATEGIAS.length > 1 ? botao('outra', 'Experimentar outra', function () { App.irPara('estrategias'); }, 'btn-secundario') : null,
           botao('terminar', 'Terminar', App.terminar, 'btn-primario')
         ]
       }),
@@ -560,7 +677,7 @@ const Telas = {
           h('p', { class: 'final-mensagem' }, TEXTOS.finalMensagem),
           h('div', { class: 'acoes-coluna' },
             botao('girar', 'Girar de novo', App.girarDeNovo, 'btn-primario'),
-            estado.cartasConcluidas ? botao('outra', 'Experimentar outra estratégia', function () { App.irPara('estrategias'); }, 'btn-secundario') : null,
+            estado.cartasConcluidas && ESTRATEGIAS.length > 1 ? botao('outra', 'Experimentar outra estratégia', function () { App.irPara('estrategias'); }, 'btn-secundario') : null,
             temEmocao ? botao('resumo', 'Ver resumo para o adulto', function () { App.irPara('resumo'); }, 'btn-secundario') : null,
             botao('inicio', 'Voltar ao início', App.inicio, 'btn-fantasma'))
         ]
@@ -614,6 +731,7 @@ const Telas = {
                 h('dt', null, h('span', { class: 'resumo-num' }, dd(k + 1)), c.pergunta),
                 h('dd', null, descreverResposta(c, e)));
             })),
+          cartasEscolhidasResumo(e),
           h('h3', null, 'Estratégias experimentadas'),
           nomesEstrategias.length ? h('ul', { class: 'resumo-estrategias' }, nomesEstrategias)
                                   : h('p', { class: 'dica' }, 'Nenhuma estratégia foi experimentada nesta rodada.'),
@@ -624,7 +742,71 @@ const Telas = {
   }
 };
 
+/** Resumo: cartas de cuidado escolhidas, com a pergunta para conversar. */
+function cartasEscolhidasResumo(e) {
+  const r = estado.respostas.cuidar;
+  const ids = r && r.status === 'respondida' ? r.valores : [];
+  const lista = CARTAS_REGULACAO[e.id] || [];
+  const notas = (r && r.notas) || {};
+  const itens = ids.map(function (id) { const c = lista[Number(id) - 1]; return c ? { carta: c, nota: notas[id] } : null; }).filter(Boolean);
+  if (!itens.length) return null;
+  return [
+    h('h3', null, 'Cartas de cuidado escolhidas'),
+    h('ul', { class: 'resumo-cuidado' }, itens.map(function (item) {
+      const c = item.carta;
+      return h('li', null, h('span', { class: 'resumo-cuidado-estrela', 'aria-hidden': 'true' }, icone('estrela')),
+        h('span', null, h('strong', null, c.nome), h('span', { class: 'resumo-cuidado-pergunta' }, 'Vamos conversar: ' + c.pergunta),
+          item.nota ? h('span', { class: 'resumo-cuidado-nota' }, h('b', null, 'Anotação: '), item.nota) : null));
+    }))
+  ];
+}
+
 /* ---------- Conteúdo das telas de prática ---------- */
+/* ---------- Carimbos do desenho (figurinhas prontas, SVG offline) ---------- */
+const CARIMBOS = (function () {
+  const L = '#2B2238', W = 'stroke="' + L + '" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"';
+  function estrelaPath(cx, cy, R, r) {
+    let d = '';
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, raio = i % 2 ? r : R;
+      d += (i ? 'L' : 'M') + (cx + Math.cos(a) * raio).toFixed(1) + ' ' + (cy + Math.sin(a) * raio).toFixed(1);
+    }
+    return d + 'Z';
+  }
+  let raios = '';
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4;
+    raios += '<path d="M' + (32 + Math.cos(a) * 18).toFixed(1) + ' ' + (32 + Math.sin(a) * 18).toFixed(1) + ' L' + (32 + Math.cos(a) * 27).toFixed(1) + ' ' + (32 + Math.sin(a) * 27).toFixed(1) + '" stroke="#FFB703" stroke-width="4" stroke-linecap="round"/>';
+  }
+  let petalas = '';
+  for (let i = 0; i < 6; i++) {
+    const a = i * Math.PI / 3;
+    petalas += '<circle cx="' + (32 + Math.cos(a) * 13).toFixed(1) + '" cy="' + (30 + Math.sin(a) * 13).toFixed(1) + '" r="9" fill="#FF7EB6" ' + W + '/>';
+  }
+  const olhos = function (y, dx) { return '<circle cx="' + (32 - dx) + '" cy="' + y + '" r="2.6" fill="' + L + '"/><circle cx="' + (32 + dx) + '" cy="' + y + '" r="2.6" fill="' + L + '"/>'; };
+  return [
+    { id: 'estrela', nome: 'Estrelinha', svg: '<path d="' + estrelaPath(32, 34, 27, 12) + '" fill="#FFD23F" ' + W + '/>' + olhos(33, 6) + '<path d="M28 39 Q32 43 36 39" fill="none" ' + W + '/>' },
+    { id: 'coracao', nome: 'Coração', svg: '<path d="M32 56 C10 42 5 25 17 16 C25 10 31 15 32 21 C33 15 39 10 47 16 C59 25 54 42 32 56Z" fill="#FF5C7A" ' + W + '/><path d="M18 24 Q20 19 25 18" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".8"/>' },
+    { id: 'cachorro', nome: 'Cachorrinho', svg: '<ellipse cx="14" cy="30" rx="7" ry="14" fill="#8A5A34" ' + W + ' transform="rotate(18 14 30)"/><ellipse cx="50" cy="30" rx="7" ry="14" fill="#8A5A34" ' + W + ' transform="rotate(-18 50 30)"/>' +
+        '<circle cx="32" cy="34" r="19" fill="#D9A066" ' + W + '/><ellipse cx="40" cy="27" rx="7" ry="6" fill="#F3DDC0" opacity=".9"/>' + olhos(30, 7) +
+        '<ellipse cx="32" cy="43" rx="10" ry="7.5" fill="#F3DDC0" ' + W + '/><ellipse cx="32" cy="39" rx="4" ry="3" fill="' + L + '"/><path d="M29 47 Q32 50 35 47" fill="none" ' + W + '/><path d="M30 48 Q32 55 34 48Z" fill="#FF7B8A" ' + W + '/>' },
+    { id: 'gato', nome: 'Gatinho', svg: '<path d="M14 26 L16 8 L28 18Z" fill="#F2A65A" ' + W + '/><path d="M50 26 L48 8 L36 18Z" fill="#F2A65A" ' + W + '/>' +
+        '<circle cx="32" cy="35" r="19" fill="#F2A65A" ' + W + '/><path d="M24 20 Q32 17 40 20" fill="none" stroke="#C9783A" stroke-width="2.4" stroke-linecap="round"/>' + olhos(32, 7) +
+        '<path d="M30 39 L34 39 L32 41.5Z" fill="#FF7B8A" ' + W + '/><path d="M27 44 Q29.5 47 32 44 Q34.5 47 37 44" fill="none" ' + W + '/>' +
+        '<path d="M10 38 L22 40 M10 44 L22 43 M54 38 L42 40 M54 44 L42 43" stroke="' + L + '" stroke-width="1.8" stroke-linecap="round"/>' },
+    { id: 'sol', nome: 'Sol', svg: raios + '<circle cx="32" cy="32" r="15" fill="#FFD23F" ' + W + '/>' + olhos(30, 5) + '<path d="M26 35 Q32 41 38 35" fill="none" ' + W + '/>' },
+    { id: 'flor', nome: 'Flor', svg: '<path d="M32 44 L32 60" stroke="#3E9B4F" stroke-width="4" stroke-linecap="round"/><path d="M32 54 Q42 46 46 52 Q40 58 32 54Z" fill="#5BBF6A" ' + W + '/>' + petalas + '<circle cx="32" cy="30" r="8" fill="#FFD23F" ' + W + '/>' },
+    { id: 'nuvem', nome: 'Nuvem', svg: '<path d="M14 46 Q4 46 6 36 Q8 28 17 29 Q18 16 31 16 Q42 15 45 26 Q57 24 59 35 Q60 46 49 46Z" fill="#FFFFFF" ' + W + '/>' + olhos(33, 7) + '<path d="M28 38 Q32 41 36 38" fill="none" ' + W + '/><circle cx="21" cy="37" r="2.6" fill="#FF7E9A" opacity=".6"/><circle cx="43" cy="37" r="2.6" fill="#FF7E9A" opacity=".6"/>' },
+    { id: 'arco', nome: 'Arco-íris', svg: '<path d="M8 46 A24 24 0 0 1 56 46" fill="none" stroke="#FF5C5C" stroke-width="5"/><path d="M13 46 A19 19 0 0 1 51 46" fill="none" stroke="#FFB703" stroke-width="5"/>' +
+        '<path d="M18 46 A14 14 0 0 1 46 46" fill="none" stroke="#5BBF6A" stroke-width="5"/><path d="M23 46 A9 9 0 0 1 41 46" fill="none" stroke="#4D96FF" stroke-width="5"/>' +
+        '<path d="M2 50 Q2 43 9 44 Q12 39 17 43 Q22 43 21 50Z" fill="#fff" ' + W + '/><path d="M43 50 Q42 43 48 44 Q51 39 56 43 Q62 43 61 50Z" fill="#fff" ' + W + '/>' }
+  ].map(function (c) {
+    c.svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">' + c.svg + '</svg>';
+    c.url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(c.svg);
+    return c;
+  });
+})();
+
 const Pratica = {
 
   respiracao: function () {
@@ -690,7 +872,16 @@ const Pratica = {
       const r = canvas.getBoundingClientRect();
       return { x: (ev.clientX - r.left) * canvas.width / r.width, y: (ev.clientY - r.top) * canvas.height / r.height };
     }
+    // Ferramenta atual: 'pincel' (traço livre) ou o id de um carimbo.
+    let modo = 'pincel';
+    const imagens = {};
+    CARIMBOS.forEach(function (c) { const img = new Image(); img.src = c.url; imagens[c.id] = img; });
     canvas.addEventListener('pointerdown', function (ev) {
+      if (modo !== 'pincel') {                      // carimbar a figurinha onde tocou
+        const p = pos(ev), tam = 150, img = imagens[modo];
+        if (img && img.complete) ctx.drawImage(img, p.x - tam / 2, p.y - tam / 2, tam, tam);
+        return;
+      }
       desenhando = true;
       canvas.setPointerCapture(ev.pointerId);
       const p = pos(ev);
@@ -718,6 +909,7 @@ const Pratica = {
         'aria-pressed': k === 0 ? 'true' : 'false',
         onclick: function () {
           cor = c;
+          escolherFerramenta('pincel');
           paleta.querySelectorAll('.cor').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
           b.setAttribute('aria-pressed', 'true');
         }
@@ -725,9 +917,28 @@ const Pratica = {
       paleta.appendChild(b);
     });
 
+    const ferramentas = h('div', { class: 'carimbos', role: 'group', 'aria-label': 'Pincel e carimbos' });
+    const btnPincel = botao('desenho', 'Pincel', function () { escolherFerramenta('pincel'); }, 'btn-secundario ferramenta-pincel');
+    ferramentas.appendChild(btnPincel);
+    const botoesCarimbo = CARIMBOS.map(function (c) {
+      const b = h('button', { type: 'button', class: 'carimbo', title: c.nome, 'aria-label': 'Carimbo: ' + c.nome,
+        onclick: function () { escolherFerramenta(c.id); } });
+      b.innerHTML = c.svg; // SVG fixo definido em CARIMBOS
+      ferramentas.appendChild(b);
+      return { id: c.id, el: b };
+    });
+    function escolherFerramenta(qual) {
+      modo = qual;
+      btnPincel.setAttribute('aria-pressed', qual === 'pincel' ? 'true' : 'false');
+      botoesCarimbo.forEach(function (x) { x.el.setAttribute('aria-pressed', x.id === qual ? 'true' : 'false'); });
+      canvas.classList.toggle('modo-carimbo', qual !== 'pincel');
+    }
+    escolherFerramenta('pincel');
+
     return h('div', { class: 'pratica-conteudo' },
-      h('p', { class: 'dica' }, 'Quer desenhar o que está sentindo? O desenho não fica guardado.'),
+      h('p', { class: 'dica' }, 'Quer desenhar o que está sentindo? Use o pincel ou toque num carimbo e depois no quadro. O desenho não fica guardado.'),
       h('div', { class: 'barra-desenho' }, paleta, botao('limpar', 'Limpar', limpar, 'btn-secundario')),
+      ferramentas,
       canvas);
   },
 

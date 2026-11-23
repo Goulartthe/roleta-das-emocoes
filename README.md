@@ -27,7 +27,8 @@ Dica: prefira emojis antigos e bem conhecidos. Os mais novos aparecem como um qu
 |---|---|
 | `index.html` | Página única, botões de topo e modal de configurações |
 | `css/style.css` | Tema, layout, animações e impressão |
-| `js/data.js` | Conteúdo (somente dados) |
+| `js/data.js` | Conteúdo (somente dados), incluindo as 50 cartas de regulação |
+| `js/ilustracoes.js` | Ilustrações em SVG das 50 cartas de regulação |
 | `js/state.js` | Estado da sessão em memória |
 | `js/audio.js` | Sons com a Web Audio API |
 | `js/wheel.js` | Roleta em SVG, sorteio e animação |

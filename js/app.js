@@ -18,6 +18,11 @@ const App = (function () {
     const precisaEmocao = ['emocao', 'carta', 'estrategias', 'pratica', 'resumo'];
     if (precisaEmocao.indexOf(estado.tela) !== -1 && !estado.emocaoAtual) estado.tela = 'roleta';
     if ((estado.tela === 'estrategias' || estado.tela === 'pratica') && !estado.cartasConcluidas) estado.tela = 'carta';
+    // Só uma estratégia (desenhar): a etapa "Cuidar" já abre direto nela, sem tela de escolha.
+    if (estado.tela === 'estrategias' && ESTRATEGIAS.length === 1) {
+      registrarEstrategia(ESTRATEGIAS[0].id);
+      estado.tela = 'pratica';
+    }
     if (estado.tela === 'pratica' && !estado.estrategiaAtual) estado.tela = 'estrategias';
 
     const e = emocaoAtual();
