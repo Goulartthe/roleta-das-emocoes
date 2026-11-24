@@ -1,0 +1,140 @@
+/* =========================================================
+   tema-infantil.css — visual para crianças de 4 a 6 anos.
+   Carregado DEPOIS de style.css: só redefine tokens e o "acabamento"
+   dos componentes. Nada de lógica muda; para voltar ao visual
+   anterior, basta remover o <link> deste arquivo no index.html.
+   Direção: brinquedo — cantos bem redondos, bordas grossas, "sombra de
+   brinquedo" sólida (botões afundam ao apertar), fonte arredondada,
+   fundo com estrelinhas e faixa de arco-íris.
+   Claro = "dia ensolarado"  ·  Escuro (padrão) = "noite estrelada".
+   ========================================================= */
+
+:root {
+  --fundo: #FFF4DF;
+  --superficie: #FFFFFF;
+  --superficie-2: #FFF9EF;
+  --texto: #2B2238;
+  --texto-suave: #6B5F7B;
+  --borda: #F0DFC2;
+  --borda-forte: #E2C79C;
+  --primario: #7C5CFF;
+  --primario-hover: #6A48F5;
+  --primario-suave: #EFEAFF;
+  --primario-sombra: #5536D6;
+  --sobre-primario: #FFFFFF;
+  --acento: #12B5A6;
+  --acento-suave: #E2FAF6;
+  --acento-borda: #93E3D8;
+  --sobre-acento: #FFFFFF;
+  --foco: #FF7A59;
+  --raio: 18px;
+  --raio-cartao: 28px;
+  --sombra: 0 6px 0 var(--borda);
+  --sombra-elevada: 0 10px 0 var(--borda), 0 14px 28px rgba(124, 92, 255, .12);
+  --fonte: "Nunito", "Varela Round", "Arial Rounded MT Bold", "Segoe UI Rounded", "Segoe UI", system-ui, sans-serif;
+  --fonte-titulo: var(--fonte);
+  --fonte-mono: var(--fonte);
+  --trilho: #F3E6CF;
+  --sobreposicao: rgba(124, 92, 255, .08);
+  --mistura: #FFFFFF;
+  --estrelinhas: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Ccircle cx='16' cy='20' r='3.5' fill='%23FFC93C' opacity='.6'/%3E%3Ccircle cx='96' cy='70' r='4' fill='%2312B5A6' opacity='.35'/%3E%3Ccircle cx='46' cy='112' r='3' fill='%23FF7A9C' opacity='.45'/%3E%3Cpath d='M112 14l3.2 6.4 7 1-5 4.9 1.2 7-6.4-3.4-6.4 3.4 1.2-7-5-4.9 7-1z' fill='%237C5CFF' opacity='.22'/%3E%3Cpath d='M30 62l2 4 4.4.6-3.2 3 .8 4.4-4-2.1-4 2.1.8-4.4-3.2-3 4.4-.6z' fill='%23FF7A59' opacity='.28'/%3E%3C/svg%3E");
+}
+
+:root[data-tema="escuro"] {
+  --fundo: #1C1745;
+  --superficie: #2A2361;
+  --superficie-2: #322A71;
+  --texto: #FFF8EC;
+  --texto-suave: #CFC7F0;
+  --borda: #40368A;
+  --borda-forte: #5848A8;
+  --primario: #FFC93C;
+  --primario-hover: #FFD766;
+  --primario-suave: #3A3180;
+  --primario-sombra: #C9931A;
+  --sobre-primario: #2B2238;
+  --acento: #4FE3C1;
+  --acento-suave: #244E6E;
+  --acento-borda: #3FA597;
+  --sobre-acento: #1C1745;
+  --foco: #FF9F7A;
+  --sombra: 0 6px 0 #140F33;
+  --sombra-elevada: 0 10px 0 #140F33, 0 16px 30px rgba(0, 0, 0, .3);
+  --trilho: #40368A;
+  --sobreposicao: rgba(255, 255, 255, .08);
+  --mistura: #2A2361;
+  --estrelinhas: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Ccircle cx='16' cy='20' r='2' fill='%23FFFFFF' opacity='.7'/%3E%3Ccircle cx='96' cy='70' r='1.6' fill='%23FFFFFF' opacity='.5'/%3E%3Ccircle cx='46' cy='112' r='2.2' fill='%23FFC93C' opacity='.6'/%3E%3Cpath d='M112 14l3.2 6.4 7 1-5 4.9 1.2 7-6.4-3.4-6.4 3.4 1.2-7-5-4.9 7-1z' fill='%23FFC93C' opacity='.45'/%3E%3Cpath d='M30 62l2 4 4.4.6-3.2 3 .8 4.4-4-2.1-4 2.1.8-4.4-3.2-3 4.4-.6z' fill='%234FE3C1' opacity='.4'/%3E%3C/svg%3E");
+}
+
+/* ---------- Base ---------- */
+body { background-color: var(--fundo); background-image: var(--estrelinhas); background-size: 140px 140px; }
+h1, h2, h3 { font-weight: 900; letter-spacing: -0.01em; }
+.meta { letter-spacing: 0; font-weight: 700; font-size: .8rem; }
+
+/* ---------- Topo com faixa de arco-íris ---------- */
+.topo { border-bottom: 0; box-shadow: 0 4px 0 rgba(0, 0, 0, .06); }
+.topo::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: -6px;
+  height: 6px;
+  background: linear-gradient(90deg, #F7C548 0 20%, #EE6C6A 20% 40%, #9A85DA 40% 60%, #63BE86 60% 80%, #5C9CE6 80%);
+}
+.marca-icone { border-radius: 50%; width: 36px; height: 36px; box-shadow: 0 3px 0 rgba(0, 0, 0, .15); }
+.marca-nome { font-weight: 900; font-size: 1.05rem; }
+
+/* Etapas: bolinhas */
+.etapa-marca { border-radius: 50%; width: 28px; height: 28px; border-width: 2px; font-size: .72rem; font-weight: 900; }
+.etapa.atual .etapa-marca { box-shadow: 0 3px 0 var(--primario-sombra); }
+.etapa + .etapa::before { height: 3px; border-radius: 3px; background: var(--borda-forte); }
+
+/* ---------- Botões de brinquedo (afundam ao apertar) ---------- */
+.btn { border-radius: 999px; font-weight: 800; border-width: 3px; }
+.btn-primario { background: var(--primario); color: var(--sobre-primario); box-shadow: 0 6px 0 var(--primario-sombra); }
+.btn-primario:hover:not(:disabled) { background: var(--primario-hover); transform: translateY(-2px); box-shadow: 0 8px 0 var(--primario-sombra); }
+.btn-primario:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 var(--primario-sombra); }
+.btn-secundario { background: var(--superficie); border-color: var(--borda-forte); box-shadow: 0 5px 0 var(--borda-forte); }
+.btn-secundario:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 7px 0 var(--borda-forte); }
+.btn-secundario:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--borda-forte); }
+.btn-fantasma:hover:not(:disabled), .btn-topo:hover { background: var(--sobreposicao); }
+
+/* ---------- Painéis como peças de brinquedo ---------- */
+.painel { border: 3px solid var(--borda); border-radius: var(--raio-cartao); box-shadow: var(--sombra); }
+.painel-cab { border-bottom: 3px dashed var(--borda); background: var(--superficie-2); }
+.painel-rodape { border-top: 3px dashed var(--borda); }
+.pagina-cab { border-bottom: 3px dashed var(--borda-forte); }
+.icone-tile { border-radius: 50%; border-width: 3px; }
+.chip-emocao { border-width: 3px; font-weight: 800; }
+.legenda li { border-width: 3px; font-weight: 800; }
+
+/* ---------- Opções das perguntas ---------- */
+.opcao { border: 3px solid var(--borda); border-radius: var(--raio); font-weight: 700; box-shadow: 0 4px 0 var(--borda); }
+.opcao:hover { transform: translateY(-2px) rotate(-.6deg); box-shadow: 0 6px 0 var(--borda-forte); }
+.opcao[aria-pressed="true"] { border-color: var(--acento); box-shadow: 0 4px 0 var(--acento-borda), inset 0 0 0 1px var(--acento); }
+.opcao-check { border-radius: 50%; border-width: 3px; width: 28px; height: 28px; }
+.segmentos span { height: 10px; border-radius: 10px; }
+.segmentos .feito, .segmentos .atual { background: linear-gradient(90deg, var(--acento), var(--primario)); }
+
+/* ---------- Campos ---------- */
+.campo { border-width: 3px; border-radius: var(--raio); box-shadow: none; }
+
+/* ---------- Roleta e resultado ---------- */
+.roda { box-shadow: 0 0 0 10px var(--superficie), 0 0 0 14px var(--borda-forte), 0 14px 0 6px rgba(0, 0, 0, .08); }
+.resultado-ilustracao, .emocao-ilustracao { border-width: 3px; border-radius: 50%; }
+.emocao-ilustracao { border-radius: var(--raio-cartao); }
+
+/* ---------- Estratégia / desenho / final ---------- */
+.item-estrategia { border: 3px solid var(--borda); border-radius: var(--raio-cartao); box-shadow: var(--sombra); }
+.carimbo { border-width: 3px; border-radius: 50%; box-shadow: 0 4px 0 var(--borda-forte); }
+.cor { box-shadow: 0 0 0 3px var(--borda-forte); }
+.tela-desenho { border: 3px solid var(--borda-forte); border-radius: var(--raio-cartao); }
+.final-icone { box-shadow: 0 5px 0 var(--acento-borda); }
+
+/* ---------- Ajuda, avisos e modal ---------- */
+.ajuda-carta, .aviso-carta, .aviso-adulto, .caixa-adulto { border-width: 3px; border-radius: var(--raio); }
+dialog { border: 3px solid var(--borda); border-radius: var(--raio-cartao); }
+.interruptor { height: 32px; }
+
+/* ---------- Movimento reduzido ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .btn-primario:hover:not(:disabled), .btn-secundario:hover:not(:disabled), .opcao:hover { transform: none; }
+}
