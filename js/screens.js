@@ -36,7 +36,8 @@ const ICONES = {
   desenho:   '<path d="M4 20l4-1L19 8l-3-3L5 16zM14 7l3 3"/>',
   lugar:     '<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3zM5 18v2M19 18v2"/>',
   coracao:   '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
-  estrela:   '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>'
+  estrela:   '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  lixeira:   '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>'
 };
 
 /** Ícone da estratégia dentro de um quadrado suave. */
@@ -877,7 +878,7 @@ const Pratica = {
     const imagens = {};
     CARIMBOS.forEach(function (c) { const img = new Image(); img.src = c.url; imagens[c.id] = img; });
     canvas.addEventListener('pointerdown', function (ev) {
-      if (modo !== 'pincel') {                      // carimbar a figurinha onde tocou
+      if (modo !== 'pincel' && modo !== 'borracha') { // carimbar a figurinha onde tocou
         const p = pos(ev), tam = 150, img = imagens[modo];
         if (img && img.complete) ctx.drawImage(img, p.x - tam / 2, p.y - tam / 2, tam, tam);
         return;
@@ -888,7 +889,8 @@ const Pratica = {
       ctx.beginPath();
       ctx.moveTo(p.x, p.y);
       ctx.lineTo(p.x + 0.1, p.y + 0.1);
-      ctx.strokeStyle = cor; ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      const apagando = modo === 'borracha';
+      ctx.strokeStyle = apagando ? '#ffffff' : cor; ctx.lineWidth = apagando ? 44 : 12; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       ctx.stroke();
     });
     canvas.addEventListener('pointermove', function (ev) {
@@ -919,7 +921,9 @@ const Pratica = {
 
     const ferramentas = h('div', { class: 'carimbos', role: 'group', 'aria-label': 'Pincel e carimbos' });
     const btnPincel = botao('desenho', 'Pincel', function () { escolherFerramenta('pincel'); }, 'btn-secundario ferramenta-pincel');
+    const btnBorracha = botao('limpar', 'Borracha', function () { escolherFerramenta('borracha'); }, 'btn-secundario ferramenta-pincel');
     ferramentas.appendChild(btnPincel);
+    ferramentas.appendChild(btnBorracha);
     const botoesCarimbo = CARIMBOS.map(function (c) {
       const b = h('button', { type: 'button', class: 'carimbo', title: c.nome, 'aria-label': 'Carimbo: ' + c.nome,
         onclick: function () { escolherFerramenta(c.id); } });
@@ -930,14 +934,16 @@ const Pratica = {
     function escolherFerramenta(qual) {
       modo = qual;
       btnPincel.setAttribute('aria-pressed', qual === 'pincel' ? 'true' : 'false');
+      btnBorracha.setAttribute('aria-pressed', qual === 'borracha' ? 'true' : 'false');
       botoesCarimbo.forEach(function (x) { x.el.setAttribute('aria-pressed', x.id === qual ? 'true' : 'false'); });
-      canvas.classList.toggle('modo-carimbo', qual !== 'pincel');
+      canvas.classList.toggle('modo-carimbo', qual !== 'pincel' && qual !== 'borracha');
+      canvas.classList.toggle('modo-borracha', qual === 'borracha');
     }
     escolherFerramenta('pincel');
 
     return h('div', { class: 'pratica-conteudo' },
-      h('p', { class: 'dica' }, 'Quer desenhar o que está sentindo? Use o pincel ou toque num carimbo e depois no quadro. O desenho não fica guardado.'),
-      h('div', { class: 'barra-desenho' }, paleta, botao('limpar', 'Limpar', limpar, 'btn-secundario')),
+      h('p', { class: 'dica' }, 'Quer desenhar o que está sentindo? Use o pincel, a borracha ou toque num carimbo e depois no quadro. O desenho não fica guardado.'),
+      h('div', { class: 'barra-desenho' }, paleta, botao('lixeira', 'Limpar tudo', limpar, 'btn-secundario')),
       ferramentas,
       canvas);
   },

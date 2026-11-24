@@ -1033,3 +1033,9 @@ dialog h2 { margin: 0 0 8px; font-size: 1.3rem; }
   .ferramenta-pincel { flex: 1 0 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .carimbo { transition: none; } }
+
+/* Borracha do desenho */
+.tela-desenho.modo-borracha { cursor: cell; }
+@media (max-width: 680px) {
+  .ferramenta-pincel { flex: 1 1 calc(50% - 3px); }
+}
